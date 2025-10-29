@@ -1,4 +1,8 @@
 import React from "react";
+import { BASE_URL } from "../utils/constant";
+import { useDispatch, useSelector } from "react-redux";
+import axios from "axios";
+import { addFeed } from "../utils/feedSlice";
 
 const UserCard = ({ user, firstName, lastName, about, photoUrl, skills = [] }) => {
   // fallback to props if user not passed
@@ -7,7 +11,25 @@ const UserCard = ({ user, firstName, lastName, about, photoUrl, skills = [] }) =
   const effectiveAbout = about || user?.about || "";
   const effectivePhotoUrl = photoUrl || user?.photoUrl || null;
   const effectiveSkills = skills.length ? skills : user?.skills || [];
+  const dispatch = useDispatch()
+  const feed = useSelector((store) => store.feed);
 
+    const handleSendRequest = async (status, userId) => {
+      try {
+        const res = await axios.post(
+          `${BASE_URL}/request/send/${status}/${userId}`,
+          {},
+          { withCredentials: true }
+        );
+         //Remove card from feed instantly
+         const updatedFeed = feed.filter((f) => f._id !== userId);
+         dispatch(addFeed(updatedFeed));
+
+  }catch (err) {
+      console.error("Send Request Error:", err);
+    
+    }
+  }
   return (
     <div className="card bg-base-200 w-80 shadow-md hover:shadow-xl transition-shadow duration-200">
       {effectivePhotoUrl ? (
@@ -45,8 +67,8 @@ const UserCard = ({ user, firstName, lastName, about, photoUrl, skills = [] }) =
         )}
 
         <div className="card-actions justify-end mt-3">
-          <button className="btn btn-sm btn-primary">Interested</button>
-          <button className="btn btn-sm btn-secondary">Ignore</button>
+          <button className="btn btn-sm btn-primary" onClick={()=>handleSendRequest('interested',user?._id )}>Interested</button>
+          <button className="btn btn-sm btn-secondary" onClick={()=>handleSendRequest('ignore',user?._id )}>Ignore</button>
         </div>
       </div>
     </div>
